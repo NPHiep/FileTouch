@@ -27,7 +27,7 @@ int insertIP(char* ip){
         if(flag[i] == 0)
         {
             strcpy(ipData[i], ip);
-            flag[i]==1;
+            flag[i]=1;
             return i;
         }
     return -1;
@@ -163,7 +163,8 @@ int main(int argc , char *argv[])
     //sendID back to user   
     sprintf(buffer, "%d", insertIP(fileName));
     write(socket , buffer , strlen(buffer));
-
+    puts("send id back");
+    close(socket);
  }
 
 void sendFile(int socket)
