@@ -1,11 +1,18 @@
 
 #include <stdio.h>
-#include <string.h>    //strlen
-#include <stdlib.h>    //strlen
+#include <sys/types.h>
 #include <sys/socket.h>
-#include <arpa/inet.h> //inet_addr
-#include <unistd.h>    //write
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/sendfile.h>
 #include <pthread.h> //for threading , link with lpthread
+ 
  
 #define MAXCLIENT 1000
 
@@ -115,7 +122,7 @@ int main(int argc , char *argv[])
  void recvFile(int socket)
  {
     char buffer[BUFSIZ];
-    int file_size, remain_data, len, read_size;
+    int file_size, remain_data, len, read_size, id;
     FILE *received_file;
     char fileName[255];
     char *message;
@@ -157,8 +164,18 @@ int main(int argc , char *argv[])
 
 void sendFile(int socket)
 {
-    int id;
-    FILE *fd;
+
+    socklen_t       sock_len;
+    ssize_t len;
+    struct sockaddr_in      server_addr;
+    struct sockaddr_in      peer_addr;
+    int fd, id;
+    int sent_bytes = 0;
+    char file_size[256];
+    struct stat file_stat;
+    int offset;
+    int remain_data;
+    char buffer[BUFSIZ];
     //recv file id
     /* Receiving file size */
     recv(socket, buffer, BUFSIZ, 0);
@@ -187,7 +204,7 @@ void sendFile(int socket)
     sprintf(file_size, "%d", file_stat.st_size);
 
     /* Sending file size */
-    len = send(peer_socket, file_size, sizeof(file_size), 0);
+    len = send(socket, file_size, sizeof(file_size), 0);
     if (len < 0)
     {
           fprintf(stderr, "Error on sending greetings --> %s", strerror(errno));
@@ -200,15 +217,15 @@ void sendFile(int socket)
     offset = 0;
     remain_data = file_stat.st_size;
     /* Sending file data */
-    while (((sent_bytes = sendfile(peer_socket, fd, &offset, BUFSIZ)) > 0) && (remain_data > 0))
+    while (((sent_bytes = sendfile(socket, fd, &offset, BUFSIZ)) > 0) && (remain_data > 0))
     {
             fprintf(stdout, "1. Server sent %d bytes from file's data, offset is now : %d and remaining data = %d\n", sent_bytes, offset, remain_data);
             remain_data -= sent_bytes;
             fprintf(stdout, "2. Server sent %d bytes from file's data, offset is now : %d and remaining data = %d\n", sent_bytes, offset, remain_data);
     }
 
-    close(peer_socket);
-    close(server_socket);
+    close(socket);
+  
 }
 
 void *connection_handler(void *socket_desc)
