@@ -27,6 +27,7 @@ int insertIP(char* ip){
         if(flag[i] == 0)
         {
             strcpy(ipData[i], ip);
+            flag[i]==1;
             return i;
         }
     return -1;
@@ -148,12 +149,15 @@ int main(int argc , char *argv[])
 
     remain_data = file_size;
 
-    while (((len = recv(socket, buffer, BUFSIZ, 0)) > 0) && (remain_data > 0))
-    {
+    while (remain_data > 0){
+        if((len = recv(socket, buffer, BUFSIZ, 0)) > 0)
+        {
             fwrite(buffer, sizeof(char), len, received_file);
             remain_data -= len;
             fprintf(stdout, "Receive %d bytes and we hope :- %d bytes\n", len, remain_data);
+        }
     }
+    printf("finish\n");
     fclose(received_file);
 
     //sendID back to user   
