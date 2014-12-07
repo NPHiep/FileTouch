@@ -123,10 +123,13 @@ int main(int argc , char *argv[])
     read_size = recv(socket , buffer , BUFSIZ , 0);
     strncpy(fileName, buffer, read_size);
     puts(fileName);
+    write(socket , "OK" , 2);
+
     /* Receiving file size */
     recv(socket, buffer, BUFSIZ, 0);
     file_size = atoi(buffer);
     printf("%d\n",file_size );
+    write(socket, "OK", 2);
     //fprintf(stdout, "\nFile size : %d\n", file_size);
 
     received_file = fopen(fileName, "w");
@@ -154,7 +157,58 @@ int main(int argc , char *argv[])
 
 void sendFile(int socket)
 {
+    int id;
+    FILE *fd;
+    //recv file id
+    /* Receiving file size */
+    recv(socket, buffer, BUFSIZ, 0);
+    id = atoi(buffer);
 
+    //open file
+    fd = open(ipData[id], O_RDONLY);
+    if (fd == -1)
+    {
+            fprintf(stderr, "Error opening file --> %s", strerror(errno));
+
+            exit(EXIT_FAILURE);
+    }
+
+    /* Get file stats */
+    if (fstat(fd, &file_stat) < 0)
+    {
+            fprintf(stderr, "Error fstat --> %s", strerror(errno));
+
+            exit(EXIT_FAILURE);
+    }
+
+    fprintf(stdout, "File Size: \n%d bytes\n", file_stat.st_size);
+
+    sock_len = sizeof(struct sockaddr_in);
+    sprintf(file_size, "%d", file_stat.st_size);
+
+    /* Sending file size */
+    len = send(peer_socket, file_size, sizeof(file_size), 0);
+    if (len < 0)
+    {
+          fprintf(stderr, "Error on sending greetings --> %s", strerror(errno));
+
+          exit(EXIT_FAILURE);
+    }
+
+    fprintf(stdout, "Server sent %d bytes for the size\n", len);
+
+    offset = 0;
+    remain_data = file_stat.st_size;
+    /* Sending file data */
+    while (((sent_bytes = sendfile(peer_socket, fd, &offset, BUFSIZ)) > 0) && (remain_data > 0))
+    {
+            fprintf(stdout, "1. Server sent %d bytes from file's data, offset is now : %d and remaining data = %d\n", sent_bytes, offset, remain_data);
+            remain_data -= sent_bytes;
+            fprintf(stdout, "2. Server sent %d bytes from file's data, offset is now : %d and remaining data = %d\n", sent_bytes, offset, remain_data);
+    }
+
+    close(peer_socket);
+    close(server_socket);
 }
 
 void *connection_handler(void *socket_desc)
@@ -165,14 +219,17 @@ void *connection_handler(void *socket_desc)
     char *message , client_message[2000];
     char mess[50];
     int id;
+    int task = 0;
     //read command
     read_size = recv(sock , client_message , 1 , 0);
     switch(client_message[0])
     {
         case 'S':
+            task = 0;
             recvFile(sock);
         break;
         case 'R':
+            task = 1;
             sendFile(sock);
         break;
         default: break;
@@ -180,7 +237,7 @@ void *connection_handler(void *socket_desc)
      
     if(read_size == 0)
     {
-        deleteIP(id);
+       
         puts("Client disconnected");
         fflush(stdout);
     }
