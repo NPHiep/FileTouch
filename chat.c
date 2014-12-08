@@ -154,7 +154,7 @@ int main(int argc , char *argv[])
         {
             fwrite(buffer, sizeof(char), len, received_file);
             remain_data -= len;
-            write(socket, "OK", 2);
+            fprintf(stdout, "Receive %d bytes and we hope :- %d bytes\n", len, remain_data);
         }
     }
     printf("finish\n");
