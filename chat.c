@@ -181,11 +181,24 @@ void sendFile(int socket)
     int offset;
     int remain_data;
     char buffer[BUFSIZ];
-    //recv file id
-    /* Receiving file size */
+    char *message;
+    //send file name
     recv(socket, buffer, BUFSIZ, 0);
     id = atoi(buffer);
-
+    if(flag[id] = 0)
+    { 
+        message = "not found";
+        write(socket , message , strlen(message));
+        close(socket);
+        return;
+    }
+    else
+    {
+        message = ipData[id];
+        write(socket , message , strlen(message));
+    }
+  
+    
     //open file
     fd = open(ipData[id], O_RDONLY);
     if (fd == -1)
@@ -205,8 +218,8 @@ void sendFile(int socket)
 
     fprintf(stdout, "File Size: \n%d bytes\n", file_stat.st_size);
 
-    sock_len = sizeof(struct sockaddr_in);
-    sprintf(file_size, "%d", file_stat.st_size);
+    //get reply
+    recv(socket, buffer, BUFSIZ, 0);
 
     /* Sending file size */
     len = send(socket, file_size, sizeof(file_size), 0);
@@ -218,6 +231,8 @@ void sendFile(int socket)
     }
 
     fprintf(stdout, "Server sent %d bytes for the size\n", len);
+    //get reply
+    recv(socket, buffer, BUFSIZ, 0);
 
     offset = 0;
     remain_data = file_stat.st_size;
