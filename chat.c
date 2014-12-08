@@ -197,7 +197,8 @@ void sendFile(int socket)
         message = ipData[id];
         write(socket , message , strlen(message));
     }
-  
+   //get reply
+    recv(socket, buffer, BUFSIZ, 2);
     
     //open file
     fd = open(ipData[id], O_RDONLY);
@@ -218,10 +219,9 @@ void sendFile(int socket)
 
     fprintf(stdout, "File Size: \n%d bytes\n", file_stat.st_size);
 
-    //get reply
-    recv(socket, buffer, BUFSIZ, 0);
+   
 
-    /* Sending file size */file_stat.st_size
+    /* Sending file size */
     len = send(socket, file_stat.st_size, sizeof(file_stat.st_size), 0);
     if (len < 0)
     {
