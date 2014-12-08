@@ -221,8 +221,8 @@ void sendFile(int socket)
     //get reply
     recv(socket, buffer, BUFSIZ, 0);
 
-    /* Sending file size */
-    len = send(socket, file_size, sizeof(file_size), 0);
+    /* Sending file size */file_stat.st_size
+    len = send(socket, file_stat.st_size, sizeof(file_stat.st_size), 0);
     if (len < 0)
     {
           fprintf(stderr, "Error on sending greetings --> %s", strerror(errno));
